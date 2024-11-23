@@ -121,7 +121,7 @@ jobs:
       jira-username: ${{ vars.JIRA_USERNAME }}
     secrets:
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-      llm-token: ${{ secrets.LLM_TOKEN }}
+      llm-api-token: ${{ secrets.LLM_TOKEN }}
       
 
   tag-jira-relesae-or-hotfix:
@@ -134,7 +134,7 @@ jobs:
       is-release: true
     secrets:
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-      llm-token: ${{ secrets.LLM_TOKEN }}
+      llm-api-token: ${{ secrets.LLM_TOKEN }}
 
   deploy-to-production:
     name: Deploy to Production
