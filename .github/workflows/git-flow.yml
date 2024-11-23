@@ -33,6 +33,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Unit Tests
+        run: npm run test
 
   feature-tests:
     name: Feature Tests
