@@ -23,7 +23,7 @@ jobs:
   initialize:
     uses: VirdocsSoftware/github-actions/.github/workflows/initialize.yml@ar-CORE-1467-create-sharable-jobs
     permissions:
-      contents: write
+      actions: write
     secrets:
       env-github-token: ${{ secrets.GITHUB_TOKEN }}
   unit-tests:
