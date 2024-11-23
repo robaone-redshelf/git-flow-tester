@@ -15,9 +15,6 @@ on:
 
 env:
   WORKFLOW_VERSION: 1.0.0
-  JIRA_USERNAME: ${{ vars.JIRA_USERNAME }}
-  JIRA_DOMAIN: ${{ vars.JIRA_DOMAIN }}
-  PARENT_PAGE_ID: 5931009
 jobs:
   initialize:
     uses: VirdocsSoftware/github-actions/.github/workflows/initialize.yml@ar-CORE-1467-create-sharable-jobs
@@ -120,8 +117,8 @@ jobs:
     uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@ar-CORE-1467-create-sharable-jobs
     with:
       target-branch: 'origin/main'
-      jira-domain: ${{ env.JIRA_DOMAIN }}
-      jira-username: ${{ env.JIRA_USERNAME }}
+      jira-domain: ${{ vars.JIRA_DOMAIN }}
+      jira-username: ${{ vars.JIRA_USERNAME }}
     secrets:
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
       llm-token: ${{ secrets.LLM_TOKEN }}
@@ -133,8 +130,8 @@ jobs:
     uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@ar-CORE-1467-create-sharable-jobs
     with:
       target-branch: 'origin/main'
-      jira-domain: ${{ env.JIRA_DOMAIN }}
-      jira-username: ${{ env.JIRA_USERNAME }}
+      jira-domain: ${{ vars.JIRA_DOMAIN }}
+      jira-username: ${{ vars.JIRA_USERNAME }}
       is-release: true
     secrets:
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
@@ -167,8 +164,8 @@ jobs:
     uses: VirdocsSoftware/github-actions/.github/workflows/release-notes.yml@ar-CORE-1467-create-sharable-jobs
     with:
       version: ${{ needs.semantic-release.outputs.new-tag }}
-      parent-page-id: ${{ env.PARENT_PAGE_ID }}
-      jira-username: ${{ env.JIRA_USERNAME }}
-      jira-domain: ${{ env.JIRA_DOMAIN }}
+      parent-page-id: ${{ vars.PARENT_PAGE_ID }}
+      jira-username: ${{ vars.JIRA_USERNAME }}
+      jira-domain: ${{ vars.JIRA_DOMAIN }}
     secrets:
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
