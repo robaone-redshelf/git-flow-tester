@@ -1,0 +1,306 @@
+name: GitFlow Workflow
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - develop
+      - main
+      - release/*
+      - hotfix/*
+
+env:
+  WORKFLOW_VERSION: 1.0.0
+  JIRA_API_TOKEN: ${{ secrets.JIRA_API }}
+  JIRA_USERNAME: ${{ secrets.JIRA_API_CREDENTIALS }}
+  JIRA_DOMAIN: virdocs
+jobs:
+  initialize:
+    name: Initialize
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v4
+  unit-tests:
+    name: Unit Tests
+    needs: [initialize]
+    if: |
+      ! ( github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' )
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+  feature-tests:
+    name: Feature Tests
+    needs: [initialize]
+    runs-on: ubuntu-latest
+    if: |
+      ! ( github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' )
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+  deploy-check:
+    name: Deployment Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: |
+      ! contains(github.event.pull_request.body, '[x] Skip CD')
+    steps:
+      - name: Announce Deployment
+        run: echo "This will be deployed"
+
+  check-release:
+    name: Check Release
+    timeout-minutes: 5
+    if: |
+      startsWith(github.head_ref,'release/v') || startsWith(github.head_ref,'hotfix/v') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Dependencies
+        run: |
+          sudo apt install figlet
+      - name: Confirm Release Version
+        run: |
+          tooling/scripts/check_release_version.sh
+        env:
+          CURRENT_BRANCH: ${{ github.head_ref }}
+          TARGET_BRANCH: ${{ github.base_ref }}
+          EVENT: ${{ github.event_name }}
+
+  semantic-pre-release:
+    name: Semantic Pre Release
+    needs: [deploy-check, unit-tests, feature-tests, initialize]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/develop'
+    outputs:
+      new-tag: ${{ steps.get-new-release.outputs.new-tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: Get Current Release
+        run: |
+          git fetch
+          CURRENT_TAG=$(./tooling/scripts/git_latest_version_tag.sh)
+          echo "current-tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+          echo Current Tag: $CURRENT_TAG
+        id: get-current-release
+      - name: Run semantic release
+        run: npx semantic-release@23 -d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get New Release
+        run: |
+          git fetch
+          NEW_TAG=$(tooling/scripts/git_predict_next_version.sh)-rc
+          echo "new-tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo New Tag: $NEW_TAG
+        id: get-new-release
+
+  deploy-to-develop:
+    name: Deploy to Develop
+    needs: [deploy-check, unit-tests, feature-tests, initialize]
+    environment: develop
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+
+  integration-testing:
+    name: Integration Testing
+    needs: [deploy-to-develop, initialize]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+  deploy-to-staging:
+    name: Deploy to Staging
+    needs: [deploy-check, unit-tests, feature-tests, check-release, initialize]
+    environment: staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name == 'pull_request' && github.base_ref == 'main' &&
+      (startsWith(github.head_ref, 'release/v') || startsWith(github.head_ref, 'hotfix/v'))
+    steps:
+      - uses: actions/checkout@v4
+
+  tag-jira-release:
+    runs-on: ubuntu-latest
+    needs: [deploy-to-develop]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: create prompt
+        id: create_prompt
+        run: |
+          DIFF="$(git log --pretty=format:'%s' origin/main..HEAD)"
+          LLM_PROMPT_PREFIX="Create a fun release description in 100 characters or less in one line without identifiers for the following data:
+          "
+          LLM_PROMPT="$LLM_PROMPT_PREFIX$DIFF"
+          echo "$LLM_PROMPT"
+          # Use a delimiter to properly handle the multi-line value
+          echo "LLM_PROMPT<<EOF" >> $GITHUB_OUTPUT
+          echo "$LLM_PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - uses: VirdocsSoftware/github-actions/.github/actions/llm@main
+        id: llm_action
+        with:
+          gemini-api-key: ${{ secrets.LLM_API_TOKEN }}
+          prompt: ${{ steps.create_prompt.outputs.LLM_PROMPT }}
+      - name: Debug
+        run: echo '${{ steps.llm_action.outputs.response }}'
+      - uses: VirdocsSoftware/github-actions/.github/actions/tag-jira-release@main
+        with:
+          description: ${{ steps.llm_action.outputs.response }}
+          target-branch: 'origin/main'
+          jira-token: ${{ secrets.JIRA_API }}
+          jira-email: ${{ secrets.JIRA_API_CREDENTIALS }}
+          jira-domain: 'virdocs.atlassian.net'
+          dry-run: 'false'
+
+  tag-jira-relesae-or-hotfix:
+    runs-on: ubuntu-latest
+    needs: [deploy-to-staging]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: create prompt
+        id: create_prompt
+        run: |
+          DIFF="$(git log --pretty=format:'%s' origin/main..HEAD)"
+          LLM_PROMPT_PREFIX="Create a fun release description in 100 characters or less in one line without identifiers for the following data:
+          "
+          LLM_PROMPT="$LLM_PROMPT_PREFIX$DIFF"
+          echo "$LLM_PROMPT"
+          # Use a delimiter to properly handle the multi-line value
+          echo "LLM_PROMPT<<EOF" >> $GITHUB_OUTPUT
+          echo "$LLM_PROMPT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - uses: VirdocsSoftware/github-actions/.github/actions/llm@main
+        id: llm_action
+        with:
+          gemini-api-key: ${{ secrets.LLM_API_TOKEN }}
+          prompt: ${{ steps.create_prompt.outputs.LLM_PROMPT }}
+      - name: Debug
+        run: echo '${{ steps.llm_action.outputs.response }}'
+      - uses: VirdocsSoftware/github-actions/.github/actions/tag-jira-release@main
+        with:
+          description: ${{ steps.llm_action.outputs.response }}
+          target-branch: 'origin/main'
+          jira-token: ${{ secrets.JIRA_API }}
+          jira-email: ${{ secrets.JIRA_API_CREDENTIALS }}
+          jira-domain: 'virdocs.atlassian.net'
+          dry-run: 'false'
+          is-release: 'true'
+
+  deploy-to-production:
+    name: Deploy to Production
+    needs: [deploy-check, check-release, initialize]
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+  semantic-release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    needs: [deploy-to-production]
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    outputs:
+      new-tag: ${{ steps.get-new-release.outputs.new-tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: Get Current Release
+        run: |
+          git fetch
+          CURRENT_TAG=$(./tooling/scripts/git_latest_version_tag.sh)
+          echo "current-tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+          echo Current Tag: $CURRENT_TAG
+        id: get-current-release
+      - name: Run semantic release
+        run: npx semantic-release@23
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get New Release
+        run: |
+          git fetch
+          NEW_TAG=$(tooling/scripts/git_predict_next_version.sh)
+          echo "new-tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo New Tag: $NEW_TAG
+        id: get-new-release
+
+  notify-release:
+    name: Notify Release
+    runs-on: ubuntu-latest
+    needs: [deploy-to-production, semantic-release]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create Confluence Release Notes
+        id: confluence_release_notes
+        run: |
+          REPOSITORY_NAME=$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)
+          VERSION="$(echo ${{ needs.semantic-release.outputs.new-tag }})"
+          RELEASE_NAME=$(echo $REPOSITORY_NAME-v$VERSION)
+          echo "RELEASE_NAME=$RELEASE_NAME"
+          JQL="fixVersion = $RELEASE_NAME"
+          ./tooling/scripts/jira_find_tickets.sh "$JQL" > jira_tickets.json
+          echo "*** JIRA Tickets ***"
+          cat jira_tickets.json
+          node ./tooling/scripts/generate_release_notes.js jira_tickets.json release_notes.html
+          echo "*** Release Notes ***"
+          cat release_notes.html
+          YEAR=$(date +'%Y')
+          DATE=$(date +'%Y-%m-%d')
+          bash -xv ./tooling/scripts/confluence_create_release_page.sh "$YEAR" "$RELEASE_NAME" "$DATE" release_notes.html > results.json
+          echo "*** Results ***"
+          cat results.json
+          jq -r '"\(.["_links"].base)\(.["_links"].webui)"' results.json
+        env:
+          PARENT_PAGE_ID: 4489150471
