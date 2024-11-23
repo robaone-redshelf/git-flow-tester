@@ -80,7 +80,7 @@ jobs:
       github.event_name == 'push' &&
       github.ref == 'refs/heads/develop'
     uses: VirdocsSoftware/github-actions/.github/actions/semantic-pre-release.yml@ar-CORE-1467-create-sharable-jobs
-    with:
+    secrets:
       semantic-github-token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy-to-develop:
@@ -158,7 +158,7 @@ jobs:
       contents: write
     needs: [deploy-to-production]
     uses: VirdocsSoftware/github-actions/.github/actions/semantic-release.yml@ar-CORE-1467-create-sharable-jobs
-    with:
+    secrets:
       semantic-github-token: ${{ secrets.GITHUB_TOKEN }}
 
   notify-release:
