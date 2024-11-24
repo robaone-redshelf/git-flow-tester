@@ -5,7 +5,35 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0"
   },
+  "devDependencies": {
+    "@semantic-release/github": "^9.0.3",
+    "@semantic-release/release-notes-generator": "^11.0.3"
+  },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "release": {
+      "branches": [
+          "main",
+          {
+              "name": "develop",
+              "prerelease": true
+          }
+      ],
+      "plugins": [
+          [
+              "@semantic-release/release-notes-generator",
+              {
+                  "linkReferences": false
+              }
+          ],
+          [
+              "@semantic-release/github",
+              {
+                  "successComment": false,
+                  "failComment": false
+              }
+          ]
+      ]
+  }
 }
