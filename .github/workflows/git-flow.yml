@@ -166,7 +166,6 @@ jobs:
     needs: [deploy-to-production, semantic-release]
     uses: VirdocsSoftware/github-actions/.github/workflows/release-notes.yml@ar-CORE-1467-create-sharable-jobs
     with:
-      version: ${{ needs.semantic-release.outputs.new-tag }}
       parent-page-id: ${{ vars.PARENT_PAGE_ID }}
       jira-username: ${{ vars.JIRA_USERNAME }}
       jira-domain: ${{ vars.JIRA_DOMAIN }}
