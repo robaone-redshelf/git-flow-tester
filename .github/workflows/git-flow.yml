@@ -122,8 +122,8 @@ jobs:
     with:
       target-branch: 'origin/main'
       jira-domain: ${{ vars.JIRA_DOMAIN }}
-      jira-username: ${{ vars.JIRA_USERNAME }}
     secrets:
+      jira-username: ${{ vars.JIRA_USERNAME }}
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
       llm-api-token: ${{ secrets.LLM_TOKEN }}
       
@@ -134,9 +134,9 @@ jobs:
     with:
       target-branch: 'origin/main'
       jira-domain: ${{ vars.JIRA_DOMAIN }}
-      jira-username: ${{ vars.JIRA_USERNAME }}
       is-release: true
     secrets:
+      jira-username: ${{ vars.JIRA_USERNAME }}
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
       llm-api-token: ${{ secrets.LLM_TOKEN }}
 
