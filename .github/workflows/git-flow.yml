@@ -118,7 +118,7 @@ jobs:
 
   tag-jira-release:
     needs: [deploy-to-develop]
-    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@main
+    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@ar-CORE-1729-get-the-correct-git-log-in-shared-action
     with:
       target-branch: 'origin/main'
       jira-domain: ${{ vars.JIRA_DOMAIN }}
@@ -167,7 +167,7 @@ jobs:
     uses: VirdocsSoftware/github-actions/.github/workflows/release-notes.yml@main
     with:
       parent-page-id: ${{ vars.PARENT_PAGE_ID }}
-      jira-username: ${{ vars.JIRA_USERNAME }}
       jira-domain: ${{ vars.JIRA_DOMAIN }}
     secrets:
+      jira-username: ${{ vars.JIRA_USERNAME }}
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
