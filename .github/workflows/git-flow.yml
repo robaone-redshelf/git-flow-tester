@@ -167,7 +167,7 @@ jobs:
     uses: VirdocsSoftware/github-actions/.github/workflows/release-notes.yml@main
     with:
       parent-page-id: ${{ vars.PARENT_PAGE_ID }}
-      jira-username: ${{ vars.JIRA_USERNAME }}
       jira-domain: ${{ vars.JIRA_DOMAIN }}
     secrets:
+      jira-username: ${{ vars.JIRA_USERNAME }}
       jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
