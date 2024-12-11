@@ -118,7 +118,7 @@ jobs:
 
   tag-jira-release:
     needs: [deploy-to-develop]
-    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@main
+    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@ar-CORE-1729-get-the-correct-git-log-in-shared-action
     with:
       target-branch: 'origin/main'
       jira-domain: ${{ vars.JIRA_DOMAIN }}
