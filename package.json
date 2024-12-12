@@ -1,6 +1,6 @@
 {
   "name": "git-flow-tester",
-  "version": "1.2.1",
+  "version": "1.4.0",
   "description": "Test git-flow workflow",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0"
@@ -13,27 +13,27 @@
   "author": "",
   "license": "ISC",
   "release": {
-      "branches": [
-          "main",
-          {
-              "name": "develop",
-              "prerelease": true
-          }
+    "branches": [
+      "main",
+      {
+        "name": "develop",
+        "prerelease": true
+      }
+    ],
+    "plugins": [
+      [
+        "@semantic-release/release-notes-generator",
+        {
+          "linkReferences": false
+        }
       ],
-      "plugins": [
-          [
-              "@semantic-release/release-notes-generator",
-              {
-                  "linkReferences": false
-              }
-          ],
-          [
-              "@semantic-release/github",
-              {
-                  "successComment": false,
-                  "failComment": false
-              }
-          ]
+      [
+        "@semantic-release/github",
+        {
+          "successComment": false,
+          "failComment": false
+        }
       ]
+    ]
   }
 }
