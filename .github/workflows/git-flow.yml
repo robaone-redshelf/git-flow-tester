@@ -118,7 +118,7 @@ jobs:
 
   tag-jira-release:
     needs: [deploy-to-develop]
-    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@ar-test
+    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@main
     with:
       target-branch: 'origin/main'
       jira-domain: ${{ vars.JIRA_DOMAIN }}
@@ -130,7 +130,7 @@ jobs:
 
   tag-jira-relesae-or-hotfix:
     needs: [deploy-to-staging]
-    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@ar-test
+    uses: VirdocsSoftware/github-actions/.github/workflows/tag-tickets-with-release.yml@main
     with:
       target-branch: 'origin/main'
       jira-domain: ${{ vars.JIRA_DOMAIN }}
