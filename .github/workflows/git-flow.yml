@@ -33,7 +33,7 @@ jobs:
     with:
       pr_title: ${{ github.event.pull_request.title }}
       pr_branch: ${{ github.event.pull_request.head.ref }}
-      target_branch: ${{ github.base_ref }}
+      target_branch: ${{ github.event.pull_request.base.ref }}
   unit-tests:
     name: Unit Tests
     needs: [initialize]
