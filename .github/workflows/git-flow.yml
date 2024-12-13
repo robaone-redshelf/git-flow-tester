@@ -23,6 +23,17 @@ jobs:
       contents: read
     secrets:
       env-github-token: ${{ secrets.GITHUB_TOKEN }}
+  pr-hygiene:
+    if: |
+      github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
+    uses: VirdocsSoftware/github-actions/.github/workflows/validate-pr.yml@feat/CORE-1611-PR-hygiene-check-workflow
+    with:
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_branch: ${{ github.event.pull_request.head.ref }}
+      target_branch: ${{ github.event.pull_request.base.ref }}
   unit-tests:
     name: Unit Tests
     needs: [initialize]
@@ -106,7 +117,7 @@ jobs:
 
   deploy-to-staging:
     name: Deploy to Staging
-    needs: [deploy-check, unit-tests, feature-tests, check-release, initialize]
+    needs: [deploy-check, unit-tests, feature-tests, check-release, initialize, pr-hygiene]
     environment: staging
     runs-on: ubuntu-latest
     timeout-minutes: 15
