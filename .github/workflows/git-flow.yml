@@ -117,7 +117,7 @@ jobs:
 
   deploy-to-staging:
     name: Deploy to Staging
-    needs: [deploy-check, unit-tests, feature-tests, check-release, initialize]
+    needs: [deploy-check, unit-tests, feature-tests, check-release, initialize, pr-hygiene]
     environment: staging
     runs-on: ubuntu-latest
     timeout-minutes: 15
