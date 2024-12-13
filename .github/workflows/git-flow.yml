@@ -24,6 +24,9 @@ jobs:
     secrets:
       env-github-token: ${{ secrets.GITHUB_TOKEN }}
   pr-hygiene:
+    permissions:
+      contents: read
+      pull-requests: read
     uses: VirdocsSoftware/github-actions/.github/workflows/validate-pr.yml@feat/CORE-1611-PR-hygiene-check-workflow
     with:
       pr_title: ${{ github.event.pull_request.title }}
