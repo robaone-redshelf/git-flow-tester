@@ -23,6 +23,11 @@ jobs:
       contents: read
     secrets:
       env-github-token: ${{ secrets.GITHUB_TOKEN }}
+  pr-hygiene:
+    uses: VirdocsSoftware/github-actions/.github/workflows/validate-pr.yml@feat/CORE-1611-PR-hygiene-check-workflow
+    with:
+      pr_title: ${{ github.event.pull_request.title }}
+      pr_branch: ${{ github.head_ref }}
   unit-tests:
     name: Unit Tests
     needs: [initialize]
