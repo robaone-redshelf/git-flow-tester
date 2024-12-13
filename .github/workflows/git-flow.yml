@@ -24,13 +24,15 @@ jobs:
     secrets:
       env-github-token: ${{ secrets.GITHUB_TOKEN }}
   pr-hygiene:
+    if: |
+      github.event_name == 'pull_request'
     permissions:
       contents: read
       pull-requests: read
     uses: VirdocsSoftware/github-actions/.github/workflows/validate-pr.yml@feat/CORE-1611-PR-hygiene-check-workflow
     with:
       pr_title: ${{ github.event.pull_request.title }}
-      pr_branch: ${{ github.head_ref }}
+      pr_branch: ${{ github.event.pull_request.head.ref }}
       target_branch: ${{ github.base_ref }}
   unit-tests:
     name: Unit Tests
