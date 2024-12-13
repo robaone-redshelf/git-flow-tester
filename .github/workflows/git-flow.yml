@@ -29,7 +29,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: VirdocsSoftware/github-actions/.github/workflows/validate-pr.yml@feat/CORE-1611-PR-hygiene-check-workflow
+    uses: VirdocsSoftware/github-actions/.github/workflows/validate-pr.yml@main
     with:
       pr_title: ${{ github.event.pull_request.title }}
       pr_branch: ${{ github.event.pull_request.head.ref }}
